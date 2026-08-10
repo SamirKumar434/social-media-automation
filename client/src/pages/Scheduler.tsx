@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PLATFORMS } from "../assets/assets";
+import { dummyPostsData, PLATFORMS } from "../assets/assets";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import {
