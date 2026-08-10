@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   AlertCircleIcon,
   CheckCircleIcon,
   PlusIcon,
