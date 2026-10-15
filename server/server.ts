@@ -12,9 +12,12 @@ import { initScheduler } from "./services/schedulerService.js";
 const app = express();
 await connectDB();
 
-// ✅ FIXED: Proper CORS configuration - REMOVE app.options("*", ...)
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  origin: [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    process.env.FRONTEND_URL as string, // your deployed frontend URL
+  ].filter(Boolean),
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
@@ -27,24 +30,20 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ❌ REMOVE THIS LINE: app.options("*", cors(corsOptions));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+app.get("/", (_req: Request, res: Response) => {
+  res.send("Server is Live!");
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/oauth", socialAuthRouter);
 app.use("/api/accounts", accountRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/activity", activityRouter);
 
-initScheduler();
-
-const port = process.env.PORT || 3000;
-
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error("❌ Error:", err);
   res.status(500).json({
     message:
@@ -52,11 +51,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Server is Live!");
-});
+// Only listen + run the scheduler locally
+if (!process.env.VERCEL) {
+  initScheduler();
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`✅ Server is running at http://localhost:${port}`);
+  });
+}
 
-app.listen(port, () => {
-  console.log(`✅ Server is running at http://localhost:${port}`);
-  console.log(`📡 API available at http://localhost:${port}/api`);
-});
+export default app;
