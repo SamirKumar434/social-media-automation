@@ -13,11 +13,20 @@ const app = express();
 await connectDB();
 
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    process.env.FRONTEND_URL as string, // your deployed frontend URL
-  ].filter(Boolean),
+  origin: (
+    origin: string | undefined,
+    cb: (err: Error | null, ok?: boolean) => void,
+  ) => {
+    if (
+      !origin ||
+      origin.startsWith("http://localhost") ||
+      origin.startsWith("http://127.0.0.1") ||
+      /^https:\/\/social-media-automation-[a-z0-9-]+\.vercel\.app$/.test(origin)
+    ) {
+      return cb(null, true);
+    }
+    cb(null, false);
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
@@ -26,7 +35,6 @@ const corsOptions = {
     "X-Requested-With",
     "Accept",
   ],
-  exposedHeaders: ["Authorization"],
 };
 
 app.use(cors(corsOptions));
